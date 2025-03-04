@@ -10,7 +10,7 @@ quotient = a / b
 v = [1, 2, 3, 4, 5]  % row vector
 w = [1; 2; 3; 4; 5; 6]  % column vector
 A = [1 2 3; 4 5 6; 7 8 9]  % 3x3 matrix
-B = A'
+B = A'  % this computes the transpose of A
 
 % plotting a function
 x = linspace(0, 10, 100);  % creates 100 points between 0 and 10
