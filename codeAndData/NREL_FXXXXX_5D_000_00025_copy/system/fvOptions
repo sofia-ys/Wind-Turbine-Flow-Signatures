@@ -1,0 +1,287 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  6                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvOptions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include        "./parameterMaster"
+
+
+
+turbineUp
+{
+    type            axialFlowTurbineALSource;
+    active          on;
+
+    axialFlowTurbineALSourceCoeffs
+    {
+        fieldNames          (U);
+        selectionMode       cellSet; // cellSet || points || cellZone
+        cellSet             turbineUp;
+        origin              $turbineUporiginMaster;
+        originOrig          $turbineUporiginOrigMaster;
+        axis                (1 0 0);
+        verticalDirection   (0 0 1);
+        freeStreamVelocity  ($freeStreamVelocityMaster 0 0);
+        tipSpeedRatio       $tipSpeedRatioMaster;
+        rotorRadius         $rotorRadiusMaster;
+        epsilonFactor       $epsilonFactorMaster;
+        tiltAngle           $tiltAngleMaster;
+
+        dynamicStall
+        {
+            active          off;
+            dynamicStallModel LeishmanBeddoes;
+        }
+
+        endEffects
+        {
+            active          on;
+            endEffectsModel Glauert; // Glauert || Shen || liftingLine
+            GlauertCoeffs
+            {
+                tipEffects  on;
+                rootEffects on;
+            }
+            ShenCoeffs
+            {
+                c1          0.125;
+                c2          21;
+                tipEffects  on;
+                rootEffects on;
+            }
+        }
+
+        blades
+        {
+            blade1
+            {
+                writePerf   true;
+                writeElementPerf true;
+                nElements   40;
+                elementProfiles
+                (
+                    #include "sectionsNREL"
+                );
+                elementData
+                (
+                    #include "elementDataNREL"
+                );
+                azimuthalOffset $upBlade1AziMaster;
+            }
+            blade2
+            {
+                $blade1;
+                writePerf   false;
+                writeElementPerf false;
+                azimuthalOffset $upBlade2AziMaster;
+            }
+            blade3
+            {
+                $blade2;
+                azimuthalOffset $upBlade3AziMaster;
+            }
+        }
+
+        //tower
+        //{
+        //    includeInTotalDrag  false; // default is false
+        //    nElements   60;
+        //    elementProfiles (cylinder);
+        //    elementData
+        //    ( // axial distance (turbine axis), height, diameter
+        //        ($HubOverhang -2.4000 3.8700)
+        //        ($HubOverhang -11.1600 4.0830)
+        //        ($HubOverhang -19.9200 4.2960)
+        //        ($HubOverhang -28.6800 4.5090)
+        //        ($HubOverhang -37.4400 4.7220)
+        //        ($HubOverhang -46.2000 4.9350)
+        //        ($HubOverhang -54.9600 5.1480)
+        //        ($HubOverhang -63.7200 5.3610)
+        //        ($HubOverhang -72.4800 5.5740)
+        //        ($HubOverhang -81.2400 5.7870)
+        //        ($HubOverhang $NegativeHubHeight 6.0)
+        //    );
+        //}
+        //(1.5*1.5*pi) / (3*2*x) = 1
+        hub
+        {
+            nElements   2;
+            elementProfiles (hubCd);
+            elementData
+            ( // axial distance, height, diameter
+                (0  1.1781 3.0000)
+                (0  0.0000 3.0000)
+                (0 -1.1781 3.0000)
+            );
+        }
+
+        profileData
+        {
+            #include "profileDataNREL"
+            cylinder
+            {
+                data ((-180 0 1.1)(180 0 1.1));
+            }
+            hubCd
+            {
+                data ((-180 0 0.3)(180 0 0.3));
+            }
+        }
+        sixDofData  
+        {
+            data 
+                  (
+                    //#include "Fixed"
+                    #include "$motionUpMaster"
+                  );
+        }
+    }
+}
+
+/*
+turbineDown
+{
+    type            axialFlowTurbineALSource;
+    active          on;
+
+    axialFlowTurbineALSourceCoeffs
+    {
+        fieldNames          (U);
+        selectionMode       cellSet; // cellSet || points || cellZone
+        cellSet             turbineDown;
+        origin              $turbineDownoriginMaster;
+        originOrig          $turbineDownoriginOrigMaster;
+        axis                (1 0 0);
+        verticalDirection   (0 0 1);
+        freeStreamVelocity  ($FSVMasterDown 0 0);
+        tipSpeedRatio       $tipSpeedRatioMaster;
+        rotorRadius         $rotorRadiusMaster;
+        epsilonFactor       $epsilonFactorMaster;
+        tiltAngle           $tiltAngleMaster;
+
+        dynamicStall
+        {
+            active          off;
+            dynamicStallModel LeishmanBeddoes;
+        }
+
+        endEffects
+        {
+            active          on;
+            endEffectsModel Glauert; // Glauert || Shen || liftingLine
+            GlauertCoeffs
+            {
+                tipEffects  on;
+                rootEffects on;
+            }
+            ShenCoeffs
+            {
+                c1          0.125;
+                c2          21;
+                tipEffects  on;
+                rootEffects on;
+            }
+        }
+
+        blades
+        {
+            blade1
+            {
+                writePerf   true;
+                writeElementPerf true;
+                nElements   40;
+                elementProfiles
+                (
+                    #include "downSectionsNREL"
+                );
+                elementData
+                (
+                    #include "elementDataNREL"
+                );
+                azimuthalOffset $downBlade1AziMaster;
+            }
+            blade2
+            {
+                $blade1;
+                writePerf   false;
+                writeElementPerf false;
+                azimuthalOffset $downBlade2AziMaster;
+            }
+            blade3
+            {
+                $blade2;
+                azimuthalOffset $downBlade3AziMaster;
+            }
+        }
+
+        //tower
+        //{
+        //    includeInTotalDrag  false; // default is false
+        //    nElements   60;
+        //    elementProfiles (cylinder);
+        //    elementData
+        //    ( // axial distance (turbine axis), height, diameter
+        //        ($HubOverhang -2.4000 3.8700)
+        //        ($HubOverhang -11.1600 4.0830)
+        //        ($HubOverhang -19.9200 4.2960)
+        //        ($HubOverhang -28.6800 4.5090)
+        //        ($HubOverhang -37.4400 4.7220)
+        //        ($HubOverhang -46.2000 4.9350)
+        //        ($HubOverhang -54.9600 5.1480)
+        //        ($HubOverhang -63.7200 5.3610)
+        //        ($HubOverhang -72.4800 5.5740)
+        //        ($HubOverhang -81.2400 5.7870)
+        //        ($HubOverhang $NegativeHubHeight 6.0)
+        //    );
+        //}
+        //(1.5*1.5*pi) / (3*2*x) = 1
+        hub
+        {
+            nElements   2;
+            elementProfiles (hubCd);
+            elementData
+            ( // axial distance, height, diameter
+                (0  1.1781 3.0000)
+                (0  0.0000 3.0000)
+                (0 -1.1781 3.0000)
+            );
+        }
+
+        profileData
+        {
+            #include "profileDataNREL"
+            cylinder
+            {
+                data ((-180 0 1.1)(180 0 1.1));
+            }
+            hubCd
+            {
+                data ((-180 0 0.3)(180 0 0.3));
+            }
+        }
+        sixDofData  
+        {
+            data 
+                  (
+                    //#include "Fixed"
+                    #include "$motionDownMaster"
+                  );
+        }
+    }
+    
+}
+*/
+
+// ************************************************************************* //

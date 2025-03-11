@@ -1,0 +1,88 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  3.0.x                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      topoSetDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include        "./parameterMaster"
+
+actions
+(
+    {
+        name 	turbineUp;
+        type	cellSet;
+        action	new;
+        source	cylinderToCell;
+        sourceInfo
+        {
+            type cylinder; 
+            p1 ($turbineUpp1Mater 0.0 0.0);
+            p2 ($turbineUpp2Mater 0.0 0.0);
+            radius 85.0; 
+        }
+    }
+
+// No more tower
+//    {
+//        name 	turbineUp;
+//        type	cellSet;
+//        action	add;
+//        source	boxToCell;
+//        sourceInfo
+//        {
+//            box (-60.0 -30.0 -90.0) (60.0 30.0 20.0);
+//        }
+//    }
+
+    {
+        name    turbineUp;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+        sourceInfo
+        {
+            set turbineUp;
+        }
+    }
+
+
+    {
+        name 	turbineDown;
+        type	cellSet;
+        action	new;
+        source	cylinderToCell;
+        sourceInfo
+        {
+            type cylinder; 
+            p1 ($turbineDownp1Mater 0.0 0.0);
+            p2 ($turbineDownp2Mater 0.0 0.0);
+            radius 85.0; 
+        }
+    }
+
+
+    {
+        name    turbineDown;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+        sourceInfo
+        {
+            set turbineDown;
+        }
+    }
+
+);
+
+// ************************************************************************* //
