@@ -9,25 +9,26 @@ saveFigure = 1;
 
 closeAllIndex = 0;
 
-deltaGrid = 1/80;
+% Define the stepsize in the Coordinate Space
+stepsize = 1/80;
 
 
-%% Grid setting 
+% WARNING COORDINATES ARE DEFINED IN TERMS OF X/D !!!
 
-meshGrid_xMin = -2 + deltaGrid/2;
-meshGrid_xMax = 8 + deltaGrid/2;
+% Defining the boundaries of the plotting domain
+xMin = -2 + stepsize/2;
+xMax = 8 + stepsize/2;
 
-meshGrid_zMin = -1 + deltaGrid/2;
-meshGrid_zMax = 1 + deltaGrid - deltaGrid/2;
+zMin = -1 + stepsize/2;
+zMax = 1 + stepsize - stepsize/2;
 
-[xq,zq] = meshgrid( ...
-    meshGrid_xMin:deltaGrid:meshGrid_xMax, ...
-    meshGrid_zMin:deltaGrid:meshGrid_zMax);
+[x_grid,z_grid] = meshgrid( ...
+    xMin:stepsize:xMax, ...
+    zMin:stepsize:zMax);
 
-
-coordinate_yPlane.xq = xq;
-coordinate_yPlane.zq = zq;
-
+% Establishing the mesh matrices for the coordinates in x and z
+coordinate_yPlane.x_grid = x_grid;
+coordinate_yPlane.z_grid = z_grid;
 
 %%  Which cases to compare, basic settings
 
