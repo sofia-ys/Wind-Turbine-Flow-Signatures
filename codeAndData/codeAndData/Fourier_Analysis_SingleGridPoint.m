@@ -60,31 +60,31 @@ V_velocity = zeros(length(files), 1); % Establish empty array to store absolute 
 
 
 for i = 1:length(files) % For each csv file
-
     % Open file(i) for reading
     file = fopen(fullfile(folder, files(i).name), 'r');
-
-    % Skip first 9 rows
-    for j = 1:1
-        fgetl(file);
-    end
-
-    % Read ONLY row 10 (ignore everything else)
-    rowData = fgetl(file); % Read row 10 as a single string
-
-    % Close the file immediately after reading row 10
-    fclose(file);
-
-    % Convert rowData string to numbers and extract column 5
-    numericData = str2double(strsplit(rowData, ',')); % Convert CSV string to numeric array
-
-    % Extract the value of each velocity component
-    u_velocity = numericData(3); % Extract the velocity of u-component from column 3
-    v_velocity = numericData(4);
-    w_velocity = numericData(5);
+    numRows = size(file, 1);
+        for row = 1:numRows
+     
+        % Read ONLY row 10 (ignore everything else)
+        rowData = fgetl(file); % Read row 10 as a single string
     
-    % Compute the absolute velocity magnitude and store it in the array
-    V_velocity(i) = sqrt(u_velocity^2 + v_velocity^2 + w_velocity^2);  
+     
+        % Skip first 9 rows
+        %for j = 1:9
+        %   fgetl(file);
+        
+        % Convert rowData string to numbers and extract column 5
+        numericData = str2double(strsplit(rowData, ',')); % Convert CSV string to numeric array
+    
+        % Extract the value of each velocity component
+        u_velocity = numericData(3); % Extract the velocity of u-component from column 3
+        v_velocity = numericData(4);
+        w_velocity = numericData(5);
+        
+        % Compute the absolute velocity magnitude and store it in the array
+        V_velocity(row) = sqrt(u_velocity^2 + v_velocity^2 + w_velocity^2);  
+        end
+        fclose(file);
 end
 
 
