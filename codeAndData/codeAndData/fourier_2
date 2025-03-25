@@ -4,7 +4,7 @@ clear; close all; clc;
 % DEFINE PARAMETERS
 folder = "./NREL_FXXXXX_5D_000_00025_copy/exportedCSV/exportedCSV_y00D";
 files = dir(fullfile(folder, '*.csv')); % Get all CSV files
-numFiles = length(files) - 1200;  % Adjusted for skipped files
+numFiles = length(files);  % Adjusted for skipped files
 
 % Ensure we have valid files
 if numFiles < 1
