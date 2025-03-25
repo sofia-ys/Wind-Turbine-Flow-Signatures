@@ -1,17 +1,17 @@
-% CLEAR UP PREVIOUS WORKSPACE
+% CLEAR PREVIOUS WORKSPACE
 clear; close all; clc;
 
 % DEFINE PARAMETERS
 folder = "./NREL_FXXXXX_5D_000_00025_copy/exportedCSV/exportedCSV_y00D";
 files = dir(fullfile(folder, '*.csv')); % Get all CSV files
-numFiles = length(files)-1200;
+numFiles = length(files) - 1200;  % Adjusted for skipped files
 
 % Ensure we have valid files
 if numFiles < 1
     error("No CSV files found in the folder!");
 end
 
-% Read the first file to determine the number of grid points
+% Read the first file to determine grid size
 firstFilePath = fullfile(folder, files(1).name);
 firstData = readmatrix(firstFilePath);
 
@@ -21,35 +21,29 @@ end
 
 numGridPoints = size(firstData, 1);  % Rows represent grid points
 
-% Preallocate the structure for velocity time series
-V_struct = struct('velocity', cell(numGridPoints, 1));
+% Preallocate velocity matrix (instead of struct)
+V_matrix = nan(numGridPoints, numFiles);  % Each row = grid point, each col = time step
 
-% Initialize empty arrays for each grid point
-for gp = 1:numGridPoints
-    V_struct(gp).velocity = nan(1, numFiles); % Preallocate with NaNs for missing values
+% Start parallel pool if not already open
+pool = gcp('nocreate'); 
+if isempty(pool)
+    parpool; % Automatically selects best number of workers
 end
 
 % Start timing
 totalStartTime = tic; 
-
 fprintf("Processing %d files with %d grid points...\n", numFiles, numGridPoints);
 
-% LOOP THROUGH FILES (TIME STEPS)
-for t = 1:numFiles
-    fileStartTime = tic; % Track time for each file
-    
+% LOOP THROUGH FILES (TIME STEPS) using parfor
+parfor t = 1:numFiles
     filePath = fullfile(folder, files(t).name);
     
     % Use readmatrix for faster reading
     data = readmatrix(filePath);
 
-    % Debug: Display file info
-    disp(['Processing file: ', files(t).name, ' | Size: ', mat2str(size(data))]);
-
     % Ensure data is valid
     if isempty(data) || size(data, 2) < 5
-        warning("Skipping file %s (empty or insufficient columns)", files(t).name);
-        continue;
+        continue;  % Skip invalid files
     end
 
     % Extract velocity components
@@ -60,15 +54,12 @@ for t = 1:numFiles
     % Compute absolute velocity magnitude
     velocity_magnitude = sqrt(u_velocity.^2 + v_velocity.^2 + w_velocity.^2);
 
-    % Store velocity values in structure (grid point-wise)
-    for gp = 1:numGridPoints
-        V_struct(gp).velocity(t) = velocity_magnitude(gp);
-    end
-
-    % Display progress update every 100 files
+    % Store in preallocated matrix
+    V_matrix(:, t) = velocity_magnitude;
+    
+    % Progress update every 100 files
     if mod(t, 100) == 0
-        elapsedFileTime = toc(fileStartTime);
-        fprintf("Processed %d/%d time steps (Last 100 took %.2f sec)...\n", t, numFiles, elapsedFileTime);
+        fprintf("Processed %d/%d time steps...\n", t, numFiles);
     end
 end
 
@@ -76,6 +67,6 @@ end
 totalElapsedTime = toc(totalStartTime);
 fprintf("Processing complete! Total time: %.2f seconds.\n", totalElapsedTime);
 
-% Save data
-save('V_velocity_struct.mat', 'V_struct');
-fprintf("Data saved to 'V_velocity_struct.mat'.\n");
+% Save data in .mat format
+save('V_velocity_matrix.mat', 'V_matrix', '-v7.3'); % v7.3 enables compression for large data
+fprintf("Data saved to 'V_velocity_matrix.mat'.\n");
