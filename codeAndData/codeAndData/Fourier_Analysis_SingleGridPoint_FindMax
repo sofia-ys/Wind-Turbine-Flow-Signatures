@@ -1,0 +1,130 @@
+% CLEAR UP PREVIOUS WORKSPACE
+clear all 
+close all
+
+% DEFINE SOME GENERAL PARAMETERS
+timeStepSize = 0.013778915 * 15;
+
+tic
+
+saveFigure = 1;
+
+closeAllIndex = 0;
+
+D = 126;
+V0 = 11.4;
+
+% switch for if always plot and save
+alwayPlotting = 1;
+
+% DEFINE PLOTTING COORDINATE SPACE
+stepsize = 1/80;
+
+% WARNING: Coordinates are defined in x/D !!!! 
+xMin = -2 + stepsize/2;
+xMax = 8 + stepsize/2;
+
+zMin = -1 + stepsize/2;
+zMax = 1 + stepsize - stepsize/2;
+
+[x_grid,z_grid] = meshgrid(xMin:stepsize:xMax, zMin:stepsize:zMax);
+
+% Establishing the mesh matrices for the coordinates in x and z
+coordinate_yPlane.x_grid = x_grid;
+coordinate_yPlane.z_grid = z_grid;
+
+% LOCATE THE DATA FILES 
+folder = "./NREL_FXXXXX_5D_000_00025_copy/exportedCSV/exportedCSV_y00D";
+
+% Get all CSV files in the folder
+files = dir(fullfile(folder, '*.csv')); % Stores all the names of each csv file in the folder
+
+% DEFINE DATA STORAGE ARRAYS
+V_velocity = zeros(length(files), 1); % Empty array for absolute velocity magnitude
+
+% Loop through files
+for i = 1:length(files) % For each csv file
+
+    % Open file(i) for reading
+    file = fopen(fullfile(folder, files(i).name), 'r');
+
+    % Skip first 9 rows
+    for j = 1:1
+        fgetl(file);
+    end
+
+    % Read ONLY row 10 (ignore everything else)
+    rowData = fgetl(file); % Read row 10 as a single string
+
+    % Close the file immediately after reading row 10
+    fclose(file);
+
+    % Convert rowData string to numbers and extract column 5
+    numericData = str2double(strsplit(rowData, ',')); % Convert CSV string to numeric array
+
+    % Extract the value of each velocity component
+    u_velocity = numericData(3); % Extract the velocity of u-component from column 3
+    v_velocity = numericData(4);
+    w_velocity = numericData(5);
+    
+    % Compute the absolute velocity magnitude and store it in the array
+    V_velocity(i) = sqrt(u_velocity^2 + v_velocity^2 + w_velocity^2);  
+end
+
+% Sampling frequency
+T = timeStepSize; % Sampling period
+Fs = 1/T; % Sampling frequency (Hz), change based on your data
+N = length(V_velocity); % Number of data points
+
+% Time vector
+t = (0:N-1) * T;
+
+% Compute FFT
+U = fft(V_velocity); % Perform FFT
+f = Fs * (0:(N/2)) / N; % Frequency vector (one-sided spectrum)
+P2 = abs(U/N); % Two-sided spectrum
+P1 = P2(1:N/2+1); % Single-sided spectrum
+P1(2:end-1) = 2 * P1(2:end-1); % Adjust magnitude
+
+% Frequency Limit (you can adjust this based on the specific method you're using)
+frequencyLimit = 11.4 / (126/80 * 2);   % Velocity over waveLength
+
+% Find the index of frequencies up to the frequencyLimit
+indexlokking = find(f <= frequencyLimit);
+
+% Now find the maximum of the FFT only within the restricted frequency domain (indexlokking)
+[maxP1, maxIndex] = max(P1(indexlokking));
+maxFreq = f(indexlokking(maxIndex)); % Corresponding frequency for the max value
+
+% ... (previous code remains the same until FFT computation)
+
+% Frequency Limit: Adjust based on expected wake frequencies (e.g., Strouhal scaling)
+frequencyLimit = 2; % Example: 2 Hz (adjust based on your data)
+
+% Exclude DC component (0 Hz) and frequencies above limit
+validIndices = find(f > 0.002 & f <= frequencyLimit);
+
+% Find the maximum FFT peak in the valid range
+[maxP1, maxIndex] = max(P1(validIndices));
+maxFreq = f(validIndices(maxIndex));
+
+% Plot time-domain signal
+figure;
+subplot(2,1,1);
+plot(t, V_velocity);
+title('Time-Domain Signal');
+xlabel('Time (s)');
+ylabel('Absolute Velocity');
+grid on;
+
+% Plot FFT (log-log scale) with marked peak
+subplot(2,1,2);
+loglog(f(validIndices), P1(validIndices));
+title('Frequency-Domain (FFT) - Log-Log Scale');
+xlabel('Frequency (Hz)');
+ylabel('|U(f)|');
+grid on;
+hold on;
+plot(maxFreq, maxP1, 'ro', 'MarkerFaceColor', 'r');
+text(maxFreq, maxP1, sprintf(' Max: %.3f Hz', maxFreq), ...
+    'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
