@@ -72,6 +72,18 @@ avg_momentum_fixed = zeros(3,1);
 avg_momentum_surging = zeros(3,1);
 
 for i = 1:3
-    avg_momentum_fixed(i,1) = mean(fixedData(i, :))/mean(fixedData(1,:));
-    avg_momentum_surging(i,1) = mean(surgingData(i,:))/mean(fixedData(1,:));
+    avg_momentum_fixed(i) = mean(fixedData(i, :)) / mean(fixedData(1, :));
+    avg_momentum_surging(i) = mean(surgingData(i, :)) / mean(fixedData(1, :));
 end
+
+% Combine the data into a matrix for grouped bar plot
+data = [avg_momentum_fixed, avg_momentum_surging];
+
+% Create bar plot
+figure;
+bar(data)
+legend('Fixed', 'Surging', )
+xlabel('Index')
+ylabel('Normalized Average Momentum')
+title('Comparison of Fixed vs Surging Conditions')
+xticklabels({'1','2','3'})
