@@ -1,25 +1,23 @@
 clear all
+close all
 warning('off', 'all');
 folder = "C:\Users\janwa\Documents\TU Delft\Bsc2\Test simulation\Code\codeAndData\NREL_FXXXXX_5D_000_00025_copy\exportedCSV\phase_average\";
 planes = [2, 5, 8];
 momentum_case = 'Fixed';
+radius_length = 63;
 
 momentum_fixed = zeros(3, 24);
 instances = 24;
 for i = 1:length(planes)
    file = (folder +'PhaAvg_V_comp_' + momentum_case+ '_xPlane'+num2str(planes(i))+"D.csv");
    data = readtable(file);
-   if i == 1
-       col1 = data{:, end-1};  % Second to last column
-       col2 = data{:, end};    % Last column
+   col1 = data{:, end-1};  % Second to last column
+   col2 = data{:, end};    % Last column
 
-       distance = sqrt(col1.^2 + col2.^2);
-       rows_to_keep = find(distance <= 126);
-   end
+   distance = sqrt(col1.^2 + col2.^2);
+   rows_to_keep = find(distance <= radius_length);
+   data = data(rows_to_keep, :);
    for ii = 1:instances
-       if ii == 1 & i == 1
-            data = data(rows_to_keep, :);
-       end
        momentum_fixed(i,ii) = sum(data{:,(3*ii-2)});
    end
 end
@@ -28,17 +26,13 @@ momentum_case = 'Surging';
 for i = 1:length(planes)
    file = (folder +'PhaAvg_V_comp_' + momentum_case+ '_xPlane'+num2str(planes(i))+"D.csv");
    data = readtable(file);
-   if i == 1
-       col1 = data{:, end-1};  % Second to last column
-       col2 = data{:, end};    % Last column
+   col1 = data{:, end-1};  % Second to last column
+   col2 = data{:, end};    % Last column
 
-       distance = sqrt(col1.^2 + col2.^2);
-       rows_to_keep = find(distance <= 126);
-   end
+   distance = sqrt(col1.^2 + col2.^2);
+   rows_to_keep = find(distance <= radius_length);
+   data = data(rows_to_keep, :);
    for ii = 1:instances
-       if ii == 1 & i == 1
-            data = data(rows_to_keep, :);
-       end
        momentum_surging(i,ii) = sum(data{:,(3*ii-2)});
    end
 end
@@ -72,4 +66,12 @@ for i = 1:3
     xticklabels({'0','\pi/2','\pi','3\pi/2','2\pi'});
     
     hold off;
+end
+
+avg_momentum_fixed = zeros(3,1);
+avg_momentum_surging = zeros(3,1);
+
+for i = 1:3
+    avg_momentum_fixed(i,1) = mean(fixedData(i, :))/mean(fixedData(1,:));
+    avg_momentum_surging(i,1) = mean(surgingData(i,:))/mean(fixedData(1,:));
 end
